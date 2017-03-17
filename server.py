@@ -23,7 +23,7 @@ xdirection = 0
 ydirection = 0
 
 #motor
-motor = mt.createMotor(4, 17, 19, 12, {"mode":"xproduction"})
+motor = mt.createMotor(4, 17, 13, 12, {"mode":"xproduction"})
 
 #Timer
 timers = RepeatRun(lambda: motor.driveMotor(xdirection, ydirection), 0.1)
