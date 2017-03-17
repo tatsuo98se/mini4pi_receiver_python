@@ -43,7 +43,7 @@ class Motor:
     def set_motor_params(self, pwm, in1, in2):
         print("set_motor_params:" + str(pwm) + ", " + str(in1) + ", " + str(in2))
 
-    # steer_in_percent: -1.0 〜 +1.0
+    # steer_in_percent: -1.0 ~ +1.0
     # -1.0: left
     #  0.0: center
     #  1.0: right
