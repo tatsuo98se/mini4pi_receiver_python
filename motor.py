@@ -1,5 +1,4 @@
 from datetime import datetime
-from real_motor import RealMotor
 
 class Motor:
 
@@ -81,7 +80,7 @@ def merge_two_dicts(x, y):
     z.update(y)
     return z
 
-def createMotor(pin_motor_in1, 
+def createMotor(pin_motor_in1,
                 pin_motor_in2,
                 pin_motor_pwm,
                 pin_servo_pwm,
@@ -92,12 +91,13 @@ def createMotor(pin_motor_in1,
 
     if options["mode"] == "production":
         print("init RealMotor")
+        from real_motor import RealMotor
         return RealMotor(pin_motor_in1,
                          pin_motor_in2,
                          pin_motor_pwm,
                          pin_servo_pwm,
                          options)
-        pass
+
     else:
         print("init StubMotor")
         return StubMotor(pin_motor_in1,
