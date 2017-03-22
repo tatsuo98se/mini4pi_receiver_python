@@ -12,7 +12,7 @@ class Motor:
         self.update_last_operation_date()
 
     def driveMotor(self, x, y):
-        if (x == 0 and y == 0) or (int(datetime.now().strftime('%s')) - self.last_update) > 0.5:
+        if (x == 0 and y == 0) or ((int(datetime.now().strftime('%s')) - self.last_update) > 1):
             self.set_motor_params(0.0, False, False)
             self.set_steering_params(0)
             return
