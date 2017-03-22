@@ -3,9 +3,9 @@ import RPi.GPIO as GPIO
 
 class RealMotor(Motor):
 
-    MAX_LEFT_VALUE = 0.036
-    MAX_RIGHT_VALUE = 0.045
-    CENTER = 0.0408
+    MAX_LEFT_VALUE = 6
+    MAX_RIGHT_VALUE = 8
+    CENTER = 7
     CLOCK = 50
 
     def __init__(self,
@@ -69,7 +69,7 @@ class RealMotor(Motor):
         self.stearing.start(stearing_value)
 
     def sleep(self):
-        self.motor.stop()
-        self.stearing.stop()
+        self.motor.start(0)
+        self.stearing.start(0)
         GPIO.output(self.pin_motor_in1, 0)
         GPIO.output(self.pin_motor_in1, 0)
