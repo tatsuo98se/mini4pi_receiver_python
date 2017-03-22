@@ -67,5 +67,6 @@ except:
     print(traceback.format_exc())
     raise
 finally:
+    timers.stop()
     serversocket.close()
     print('finish')
