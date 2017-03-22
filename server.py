@@ -29,8 +29,12 @@ motor = mt.createMotor(4, 17, 13, 12, {"mode":"xproduction"})
 timers = RepeatRun(lambda: motor.driveMotor(xdirection, ydirection), 0.1)
 timers.start()
 
-hostname = socket.gethostname()
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+hostname = s.getsockname()[0]
+s.close()
 print(hostname)
+
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     serversocket.bind((hostname, 20000))
