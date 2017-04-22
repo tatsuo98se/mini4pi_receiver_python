@@ -45,8 +45,7 @@ class Motor:
 
         self.__is_sleep  = False
         if (int(datetime.now().strftime('%s')) - self.last_update) > 1:
-            self.driveMotor(0, 0)
-            return
+            self.__set_drive_params(0, 0)
 
         print("drive motor: " + str(self.__x) + ", " + str(self.__y))
         pwm = min(abs(self.__y)/100.0, 1)
@@ -66,10 +65,14 @@ class Motor:
 
     def driveMotor(self, x, y):
         self.__update_last_operation_date()
+        self.__set_drive_params(x, y)
+
+    def __set_drive_params(self, x, y):
         self.__old_x = self.__x
         self.__old_y = self.__y
         self.__x = x
         self.__y = y
+
 
     def __update_last_operation_date(self):
         self.last_update = int(datetime.now().strftime('%s'))
