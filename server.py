@@ -2,33 +2,10 @@
 import sys
 import traceback
 import socket
-from threading import Thread,Event
 import motor as mt
-
-class RepeatRun(Thread):
-    def __init__(self, action, interval):
-        Thread.__init__(self)
-        self.stopped = Event()
-        self.action = action
-        self.interval = interval
-
-    def run(self):
-        while not self.stopped.wait(self.interval):
-          self.action()
-
-    def stop(self):
-      self.stopped.set()
-
-
-xdirection = 0
-ydirection = 0
 
 #motor
 motor = mt.createMotor(4, 17, 13, 12, {"mode":"xproduction"})
-
-#Timer
-timers = RepeatRun(lambda: motor.driveMotor(xdirection, ydirection), 0.1)
-timers.start()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
@@ -58,7 +35,7 @@ try:
             xdirection = int(x)
             ydirection = int(y)
             print("x: " + str(xdirection) + " y:" + str(ydirection))
-            motor.update_last_operation_date()
+            motor.driveMotor(xdirection, ydirection)
 
         sock.close()
         print('disconnected.')
@@ -69,3 +46,4 @@ except:
 finally:
     serversocket.close()
     print('finish')
+    motor.stop()

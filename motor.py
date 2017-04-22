@@ -1,42 +1,77 @@
 from datetime import datetime
+from threading import Thread,Event
+
+class RepeatRun(Thread):
+    def __init__(self, action, interval):
+        Thread.__init__(self)
+        self.stopped = Event()
+        self.action = action
+        self.interval = interval
+
+    def run(self):
+        while not self.stopped.wait(self.interval):
+          self.action()
+
+    def stop(self):
+      self.stopped.set()
 
 class Motor:
 
     def __init__(self, pin_motor_in1, pin_motor_in2,
                  pin_motor_pwm, pin_servo_pwm, options):
 
-        self.pin_motor_in1 = pin_motor_in1
-        self.pin_motor_in2 = pin_motor_in2
-        self.pin_motor_pwm = pin_motor_pwm
-        self.pin_servo_pwm = pin_servo_pwm
-        self.update_last_operation_date()
+        self.__update_last_operation_date()
 
-    def driveMotor(self, x, y):
-        if (x == 0 and y == 0) or ((int(datetime.now().strftime('%s')) - self.last_update) > 1):
-            self.set_motor_params(0.0, False, False)
-            self.set_steering_params(0)
-            return
+        self.__old_x = 0
+        self.__old_y = 0
+        self.__x = 0
+        self.__y = 0
+        self.__timer = RepeatRun(lambda: self.__apply_motor_params(), 0.2)
+        self.__timer.start()
+        self.__is_sleep = False
 
-        if (int(datetime.now().strftime('%s')) - self.last_update) > 2:
+    def stop(self):
+        self.__timer.stop()
+
+    def __is_params_changed(self):
+        if self.__old_y != self.__y or self.__old_x != self.__x:
+            return True
+        return False
+
+    def __apply_motor_params(self):
+        if not self.__is_params_changed():
             self.sleep()
             return
 
-        print("drive motor: " + str(x) + ", " + str(y))
-        pwm = min(abs(y)/100.0, 1)
-        if y > 0:
+        self.__is_sleep  = False
+        if (int(datetime.now().strftime('%s')) - self.last_update) > 1:
+            self.driveMotor(0, 0)
+            return
+
+        print("drive motor: " + str(self.__x) + ", " + str(self.__y))
+        pwm = min(abs(self.__y)/100.0, 1)
+        if self.__y > 0:
             self.set_motor_params(pwm, False, True)
         else:
             self.set_motor_params(pwm, True, False)
 
-        steering = x/100.0
-        if x > 0:
+        steering = self.__x/100.0
+        if self.__x > 0:
             steering = min(steering, 1)
         else:
             steering = max(steering, -1)
 
         self.set_steering_params(steering)
 
-    def update_last_operation_date(self):
+
+    def driveMotor(self, x, y):
+        self.__update_last_operation_date()
+        self.__old_x = self.__x
+        self.__old_y = self.__y
+        self.__x = x
+        self.__y = y
+
+    def __update_last_operation_date(self):
         self.last_update = int(datetime.now().strftime('%s'))
 
     def set_motor_params(self, pwm, in1, in2):
@@ -51,7 +86,9 @@ class Motor:
         print("set_steering_params " + str(steering_in_percent))
 
     def sleep(self):
-        print("sleep")
+        if not self.__is_sleep:
+            print("sleep")
+        self.__is_sleep = True
 
 
 class StubMotor(Motor):

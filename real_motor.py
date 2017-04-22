@@ -59,7 +59,7 @@ class RealMotor(Motor):
             steering_in_percent = min(steering_in_percent, 1)
             stearing_value = self.CENTER - \
              (self.CENTER - self.MAX_LEFT_VALUE) * abs(steering_in_percent)
-        elif stearing_value < 0:
+        elif steering_in_percent < 0:
             steering_in_percent = max(steering_in_percent, -1)
             stearing_value = self.CENTER + \
              (self.MAX_RIGHT_VALUE - self.CENTER) * abs(steering_in_percent)
@@ -69,6 +69,7 @@ class RealMotor(Motor):
         self.stearing.start(stearing_value)
 
     def sleep(self):
+        Motor.sleep(self)
         self.motor.start(0)
         self.stearing.start(0)
         GPIO.output(self.pin_motor_in1, 0)
