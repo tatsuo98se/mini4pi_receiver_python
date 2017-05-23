@@ -16,6 +16,19 @@
             ]
         },
         {
+            "name": "facedetect",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": true,
+            "pythonPath": "${config.python.pythonPath}",
+            "program": "${workspaceRoot}/face_detect.py",
+            "cwd": "${workspaceRoot}",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ]
+        },        {
             "name": "PySpark",
             "type": "python",
             "request": "launch",

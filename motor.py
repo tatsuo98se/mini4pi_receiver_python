@@ -22,29 +22,34 @@ class Motor:
 
         self.__update_last_operation_date()
 
-        self.__old_x = 0
-        self.__old_y = 0
+        self.__last_x = 0
+        self.__last_y = 0
         self.__x = 0
         self.__y = 0
-        self.__timer = RepeatRun(lambda: self.__apply_motor_params(), 0.2)
-        self.__timer.start()
         self.__is_sleep = False
+        self.__timer = RepeatRun(self.__apply_motor_params, 0.2)
+        self.__timer.start()
 
     def stop(self):
         self.__timer.stop()
 
     def __is_params_changed(self):
-        if self.__old_y != self.__y or self.__old_x != self.__x:
+        if self.__last_y != self.__y or self.__last_x != self.__x:
             return True
         return False
 
     def __apply_motor_params(self):
+
         if not self.__is_params_changed():
             self.sleep()
             return
 
-        self.__is_sleep  = False
-        if (int(datetime.now().strftime('%s')) - self.last_update) > 1:
+        self.__last_x = self.__x
+        self.__last_y = self.__y
+
+        self.__is_sleep = False
+
+        if (int(datetime.now().strftime('%s')) - self.__last_update) > 1:
             self.__set_drive_params(0, 0)
 
         print("drive motor: " + str(self.__x) + ", " + str(self.__y))
@@ -68,14 +73,12 @@ class Motor:
         self.__set_drive_params(x, y)
 
     def __set_drive_params(self, x, y):
-        self.__old_x = self.__x
-        self.__old_y = self.__y
         self.__x = x
         self.__y = y
 
 
     def __update_last_operation_date(self):
-        self.last_update = int(datetime.now().strftime('%s'))
+        self.__last_update = int(datetime.now().strftime('%s'))
 
     def set_motor_params(self, pwm, in1, in2):
         print("set_motor_params:" + str(pwm) + ", " + str(in1) + ", " + str(in2))
