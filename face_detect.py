@@ -67,29 +67,29 @@ def detect_and_draw(img, cascade):
                 cv.Rectangle(img, pt1, pt1, cv.RGB(255, 0, 0), 3, 8, 0)
             
             xdirection, ydirection = facesize_to_x_y(default_capture_size, max_area, max_area_center)
-            motor.driveMotor(xdirection, ydirection)
+            motor.driveMotor(int(xdirection*100), int(ydirection*100))
 
 
 #    cv.ShowImage("result", img)
 
 def facesize_to_x_y(size, area, center):
-  # facesize = 2000 = y = 1
-  # facesize = 15000 = y = 0
-  # facesize > 20000 = y = -1
-  area_ = area - 15000
-  y = 0
-  if area_ > 0:
-      # 5000 / 0.693
-      y = np.exp((area_ / 7215.0) ) - 1
-      y = -y
-  else:
-      # 13000 / 0.693
-      y = np.exp(((15000 - area) / 18759.0)) - 1
+    # facesize = 2000 = y = 1
+    # facesize = 15000 = y = 0
+    # facesize > 20000 = y = -1
+    area_ = area - 15000
+    y = 0
+    if area_ > 0:
+        # 5000 / 0.693
+        y = np.exp((area_ / 7215.0)) - 1
+        y = -y
+    else:
+        # 13000 / 0.693
+        y = np.exp(((15000 - area) / 18759.0)) - 1
 
-  x = (center - default_capture_size[0] / 2.0) / (default_capture_size[0] / 2.0)
+    x = (center - default_capture_size[0] / 2.0) / (default_capture_size[0] / 2.0)
 
-#  print("x=%d y=%d", x, y)
-  return x, y
+    #  print("x=%d y=%d", x, y)
+    return x, y
 
 if __name__ == '__main__':
 
