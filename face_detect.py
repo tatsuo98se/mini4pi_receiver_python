@@ -1,18 +1,9 @@
 import sys
 import os
-import cv2.cv as cv
 from optparse import OptionParser
 import motor as mt
 import numpy as np
-
-
-# Parameters for haar detection
-# From the API:
-# The default parameters (scale_factor=2, min_neighbors=3, flags=0) are tuned 
-# for accurate yet slow object detection. For a faster operation on real video 
-# images the settings are: i
-# scale_factor=1.2, min_neighbors=2, flags=CV_HAAR_DO_CANNY_PRUNING, 
-# min_size=<minimum possible face size
+import cv2
 
 min_size = (20, 20)
 image_scale = 1
@@ -26,51 +17,31 @@ default_capture_size = (320, 240)
 motor = mt.createMotor(4, 17, 13, 12, {"mode":"xproduction"})
 
 def detect_and_draw(img, cascade):
-    # allocate temporary images
-    gray = cv.CreateImage((img.width,img.height), 8, 1)
-    small_img = cv.CreateImage((cv.Round(img.width / image_scale),
-			       cv.Round (img.height / image_scale)), 8, 1)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=1, minSize=(1, 1))
 
-    # convert color input image to grayscale
-    cv.CvtColor(img, gray, cv.CV_BGR2GRAY)
+    if len(faces) > 0:
+        max_area = 0
+        max_area_center = 0
 
-    # scale input image for faster processing
-    cv.Resize(gray, small_img, cv.CV_INTER_LINEAR)
+        for (x, y, w, h) in faces:
 
-    cv.EqualizeHist(small_img, small_img)
+            center_x = x + int(w * 0.5 + 0.5)
+            center_y = y + int(w * 0.5 + 0.5)
+            pt1 = (center_x, center_y)
+            area = w * h
 
-    if(cascade):
-        t = cv.GetTickCount()
-        faces = cv.HaarDetectObjects(small_img, cascade, cv.CreateMemStorage(0),
-                                     haar_scale, min_neighbors, haar_flags, min_size)
-        t = cv.GetTickCount() - t
-#        print ("detection time = %gms" % (t/(cv.GetTickFrequency()*1000.)))
-        if faces:
-            max_area = 0
-            max_area_center = 0
+            if area > max_area:
+                max_area = area
+                max_area_center = center_x
 
-            for ((x, y, w, h), n) in faces:
-                # the input to cv.HaarDetectObjects was resized, so scale the
-                # bounding box of each face and convert it to two CvPoints
-#                pt1 = (int(x * image_scale), int(y * image_scale))
-#                pt2 = (int((x + w) * image_scale), int((y + h) * image_scale))
-                center_x = x + int(w * 0.5 + 0.5)
-                center_y = y + int(w * 0.5 + 0.5)
-                pt1 = (center_x, center_y)
-                area = w * h
-                if area > max_area:
-                    max_area = area
-                    max_area_center = center_x
+                cv2.rectangle(img, (x,y),(x+w,y+h), (0,0,255), thickness=4)
 
-#                print("pos=(%d, %d) area=%d", center_x, center_y, area)
-#                pt2 = (int((x + w) * image_scale), int((y + h) * image_scale))
-                cv.Rectangle(img, pt1, pt1, cv.RGB(255, 0, 0), 3, 8, 0)
-            
-            xdirection, ydirection = facesize_to_x_y(default_capture_size, max_area, max_area_center)
-            motor.driveMotor(int(xdirection*100), int(ydirection*100))
+        xdirection, ydirection = facesize_to_x_y(default_capture_size, max_area, max_area_center)
+        motor.driveMotor(int(xdirection*100), int(ydirection*100))
 
 
-#    cv.ShowImage("result", img)
+    cv2.imshow('fram', img)
 
 def facesize_to_x_y(size, area, center):
     # facesize = 2000 = y = 1
@@ -80,11 +51,11 @@ def facesize_to_x_y(size, area, center):
     y = 0
     if area_ > 0:
         # 5000 / 0.693
-        y = np.exp((area_ / 7215.0)) - 1
+        y = np.exp((area_ / 7215.0 / 2)) - 1
         y = -y
     else:
         # 13000 / 0.693
-        y = np.exp(((15000 - area) / 18759.0)) - 1
+        y = np.exp(((15000 - area) / 18759.0 / 2)) - 1
 
     x = (center - default_capture_size[0] / 2.0) / (default_capture_size[0] / 2.0)
 
@@ -93,54 +64,24 @@ def facesize_to_x_y(size, area, center):
 
 if __name__ == '__main__':
 
-    parser = OptionParser(usage = "usage: %prog [options] [filename|camera_index]")
-    parser.add_option("-c", "--cascade", action="store", dest="cascade", type="str", help="Haar cascade file, default %default", default = "./face.xml")
-    (options, args) = parser.parse_args()
-
     print(os.path.abspath("./face.xml"))
-    cascade = cv.Load(os.path.abspath("./face.xml"))
-    capture = cv.CreateCameraCapture(camera)
+    cascade = cv2.CascadeClassifier(os.path.abspath("./face.xml"))
+    capture = cv2.VideoCapture(camera)
 
+ 
     width = default_capture_size[0]
     height = default_capture_size[1]
+    capture.set(3,width)
+    capture.set(4,height)
 
-    if width is None:
-    	  width = int(cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH))
-    else:
-    	  cv.SetCaptureProperty(capture,cv.CV_CAP_PROP_FRAME_WIDTH,width)
+    while True:
 
-    if height is None:
-	      height = int(cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_HEIGHT))
-    else:
-	      cv.SetCaptureProperty(capture,cv.CV_CAP_PROP_FRAME_HEIGHT,height) 
+        ret, frame_copy = capture.read()
 
-    if capture:
-        frame_copy = None
-        while True:
+        detect_and_draw(frame_copy, cascade)
 
-            frame = cv.QueryFrame(capture)
-            if not frame:
-                cv.WaitKey(0)
-                break
-            if not frame_copy:
-                frame_copy = cv.CreateImage((frame.width,frame.height),
-                                            cv.IPL_DEPTH_8U, frame.nChannels)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-#                frame_copy = cv.CreateImage((frame.width,frame.height),
-#                                            cv.IPL_DEPTH_8U, frame.nChannels)
-
-            if frame.origin == cv.IPL_ORIGIN_TL:
-                cv.Copy(frame, frame_copy)
-            else:
-                cv.Flip(frame, frame_copy, 0)
-            
-            detect_and_draw(frame_copy, cascade)
-
-            if cv.WaitKey(10) >= 0:
-                break
-    else:
-        image = cv.LoadImage(input_name, 1)
-        detect_and_draw(image, cascade)
-        cv.WaitKey(0)
-
-#    cv.DestroyWindow("result")
+    capture.release()
+    cv.DestroyWindow("result")
